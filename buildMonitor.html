@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>AWS CI Build Monitor</title>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div>
+      <script src="./pipelines.js"></script>
+    </div>
+    <div>
+      <script>
+        $(document).ready(function () {
+          const getPipelineState = (pipeline) => {
+            let result = {};
+            result.name = pipeline.pipelineName;
+            result.stages = [];
+            pipeline.stageStates.forEach((stageState) => {
+              result.stages.push({
+                name: stageState.stageName,
+                status: stageState.latestExecution.status,
+              });
+            });
+            return result;
+          };
+
+          const renderNameHtml = (el, name) => {
+            let html = `
+                <div class="panel" id="${name}">
+                    <h4>${name}</h4>
+                </div>
+            `;
+            $(el).append(html);
+          };
+
+          const getColorClass = (stageStatus) => {
+            let colorClass;
+            switch (stageStatus.toLowerCase()) {
+              case "succeeded":
+                colorClass = "btn-success";
+                break;
+              case "inprogress":
+                colorClass = "btn-warning";
+                break;
+              case "failed":
+                colorClass = "btn-danger";
+                break;
+              default:
+                colorClass = "btn-default";
+                break;
+            }
+            return colorClass;
+          };
+
+          const renderStageHtml = (el, name, status) => {
+            let colorClass = getColorClass(status);
+            var html = `
+                <button type="button" class="btn ${colorClass}">
+                    ${name}
+                </button>
+            `;
+            $(el).append(html);
+          };
+
+          pipelineNames.forEach((pipeline) => {
+            const script = document.createElement("script");
+            script.src = `./${pipeline}.js`;
+            script.type = "text/javascript";
+            script.addEventListener("load", () => {
+              let pipelineState = getPipelineState(eval(pipeline));
+              renderNameHtml("#pipelines", pipelineState.name);
+              pipelineState.stages.forEach((stage) => {
+                renderStageHtml(
+                  `#${pipelineState.name}`,
+                  stage.name,
+                  stage.status
+                );
+              });
+            });
+            document.head.appendChild(script);
+          });
+        });
+      </script>
+    </div>
+    <div id="pipelines"></div>
+  </body>
+</html>
