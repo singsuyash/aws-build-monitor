@@ -24,6 +24,9 @@
               result.stages.push({
                 name: stageState.stageName,
                 status: stageState.latestExecution.status,
+                url: stageState.actionStates[0].revisionUrl == undefined ? stageState.actionStates[0].latestExecution.externalExecutionUrl : stageState.actionStates[0].revisionUrl,
+                commit: stageState.actionStates[0].latestExecution.summary,
+                lastStatusChange: stageState.actionStates[0].latestExecution.lastStatusChange
               });
             });
             return result;
@@ -57,12 +60,15 @@
             return colorClass;
           };
 
-          const renderStageHtml = (el, name, status) => {
-            let colorClass = getColorClass(status);
+          const renderStageHtml = (el, stage) => {
+            let colorClass = getColorClass(stage.status);
+            let altText = `
+              commit: ${stage.commit || ''} ||| lastStatusChange:${stage.lastStatusChange || ''}
+            `;
             var html = `
-                <button type="button" class="btn ${colorClass}">
-                    ${name}
-                </button>
+                <a type="button" class="btn ${colorClass}" href="${stage.url}" target="_blank" title="${altText}">
+                    ${stage.name}
+                </a>
             `;
             $(el).append(html);
           };
@@ -76,9 +82,7 @@
               renderNameHtml("#pipelines", pipelineState.name);
               pipelineState.stages.forEach((stage) => {
                 renderStageHtml(
-                  `#${pipelineState.name}`,
-                  stage.name,
-                  stage.status
+                  `#${pipelineState.name}`, stage
                 );
               });
             });
