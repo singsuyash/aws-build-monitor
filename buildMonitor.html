@@ -24,9 +24,14 @@
               result.stages.push({
                 name: stageState.stageName,
                 status: stageState.latestExecution.status,
-                url: stageState.actionStates[0].revisionUrl == undefined ? stageState.actionStates[0].latestExecution.externalExecutionUrl : stageState.actionStates[0].revisionUrl,
+                url:
+                  stageState.actionStates[0].revisionUrl == undefined
+                    ? stageState.actionStates[0].latestExecution
+                        .externalExecutionUrl
+                    : stageState.actionStates[0].revisionUrl,
                 commit: stageState.actionStates[0].latestExecution.summary,
-                lastStatusChange: stageState.actionStates[0].latestExecution.lastStatusChange
+                lastStatusChange:
+                  stageState.actionStates[0].latestExecution.lastStatusChange,
               });
             });
             return result;
@@ -63,12 +68,55 @@
           const renderStageHtml = (el, stage) => {
             let colorClass = getColorClass(stage.status);
             let altText = `
-              commit: ${stage.commit || ''} ||| lastStatusChange:${stage.lastStatusChange || ''}
+              commit: ${stage.commit || ""} ||| lastStatusChange:${
+              stage.lastStatusChange || ""
+            }
             `;
-            var html = `
-                <a type="button" class="btn ${colorClass}" href="${stage.url}" target="_blank" title="${altText}">
-                    ${stage.name}
+
+            const getDisplayDate = (stageLastStatusChange) => {
+              let displayDate = "";
+              if (stageLastStatusChange !== undefined) {
+                let changeTimeStamp = new Date(stage.lastStatusChange);
+                let changeDate = changeTimeStamp.toLocaleDateString();
+                let changeTime = `${changeTimeStamp.getHours()}:${changeTimeStamp.getMinutes()}`;
+                let today = new Date().toLocaleDateString();
+                displayDate =
+                  changeDate === today
+                    ? `Today, ${changeTime}`
+                    : `${changeDate}, ${changeTime}`;
+              }
+              return displayDate;
+            };
+
+            const getRightArrow = () => {
+              return `
+                  <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      width="16" 
+                      height="16" 
+                      fill="currentColor" 
+                      class="bi bi-arrow-right" 
+                      viewBox="0 0 16 16">
+                      <path 
+                        fill-rule="evenodd" 
+                        d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"
+                      />
+                    </svg>
+              `;
+            };
+
+            let html = `
+                <a style="width:400px; margin-bottom:10px;" type="button" class="btn ${colorClass}" href="${
+              stage.url
+            }" target="_blank" title="${altText}">
+                    <div style="font-weight:bold; color:black; font-size:1.1em">${
+                      stage.name
+                    }</div>
+                    <div style="font-weight:bold; color:#2f4b49;">${getDisplayDate(
+                      stage.lastStatusChange
+                    )}</div>
                 </a>
+                ${getRightArrow()}
             `;
             $(el).append(html);
           };
@@ -81,9 +129,7 @@
               let pipelineState = getPipelineState(eval(pipeline));
               renderNameHtml("#pipelines", pipelineState.name);
               pipelineState.stages.forEach((stage) => {
-                renderStageHtml(
-                  `#${pipelineState.name}`, stage
-                );
+                renderStageHtml(`#${pipelineState.name}`, stage);
               });
             });
             document.head.appendChild(script);
